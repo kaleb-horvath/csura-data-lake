@@ -20,7 +20,7 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
 
-  createbuckets:
+  client:
     image: quay.io/minio/mc:RELEASE.2025-03-12T17-29-24Z
     container_name: "minio-client"
     depends_on:
