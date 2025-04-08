@@ -1,0 +1,46 @@
+services:
+
+
+  # primary storage node (single for now)
+  minio:
+    image: 'minio/minio'
+    env_file:
+      - .env
+    hostname: ${DATA_LAKE_HOSTNAME}
+    container_name: "${DATA_LAKE_HOSTNAME}-minio"
+    ports:
+      - "${DATA_LAKE_SERVICE_PORT}:${DATA_LAKE_SERVICE_PORT}"
+      - "${DATA_LAKE_CONSOLE_PORT}:${DATA_LAKE_CONSOLE_PORT}"
+    volumes:
+      # mounted volumes for easy access
+      - ${DATA_LAKE_HOST_DATA_DIR}:/export 
+      - ${DATA_LAKE_HOST_CONFIG_DIR}:/root/.minio 
+    networks:
+      - ${DATA_LAKE_NETWORK_NAME}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/minio/health/live"]
+      interval: 30s 
+      timeout: 20s 
+      retries: 3
+    command: ["server", "--console-address", ":9191", "/export"]
+
+
+
+  # client service for ease of use
+  createbuckets:
+    image: 'minio/mc'
+    container_name: data-lake-createbuckets
+    depends_on:
+      - minio 
+    env_file:
+      - .env 
+    networks: 
+      - ${DATA_LAKE_NETWORK_NAME} 
+    volumes:
+      - ./minio/entrypoint.sh:/entrypoint.sh 
+    entrypoint: /bin/bash /entrypoint.sh
+
+networks:
+  csura:
+    name: ${DATA_LAKE_NETWORK_NAME} 
+    driver: bridge 
